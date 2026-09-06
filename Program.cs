@@ -64,7 +64,8 @@ builder.Services.AddRateLimiter(options =>
 // Register EF Core with the PostgreSQL (Npgsql) provider.
 // Connection string comes from configuration, not from code.
 // EnableDynamicJson lets POCOs (PatreonData, ExternalLinks) map to jsonb.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = NormalizeNpgsqlConnectionString(
+    builder.Configuration.GetConnectionString("DefaultConnection"));
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.EnableDynamicJson();
 var dataSource = dataSourceBuilder.Build();
@@ -137,3 +138,22 @@ app.UseStaticFiles();
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 app.Run();
+
+// Render Blueprint connection strings are often postgres:// URIs; Npgsql prefers keywords + SSL.
+static string NormalizeNpgsqlConnectionString(string? connectionString)
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing.");
+
+    if (!connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+        && !connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        return connectionString;
+
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var user = Uri.UnescapeDataString(userInfo[0]);
+    var pass = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+    var db = uri.AbsolutePath.Trim('/');
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    return $"Host={uri.Host};Port={port};Database={db};Username={user};Password={pass};SSL Mode=Require;Trust Server Certificate=true";
+}
