@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extension Test Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <main class="max-w-3xl mx-auto px-4 py-10">
+    <p class="text-sm text-slate-400 mb-4"><a class="text-indigo-400" href="/">Back to catalog</a></p>
+    <h1 class="text-3xl font-bold mb-2">Extension Test Simulator</h1>
+    <p class="text-slate-400 mb-6">Same relative GET calls a Chrome extension would make (no API key).</p>
+
+    <form id="lookup-form" class="flex flex-col sm:flex-row gap-2 mb-6">
+      <input id="lookup-input" type="text" placeholder="Movie title or TMDB ID"
+        class="flex-1 rounded-lg bg-slate-900 border border-slate-700 px-4 py-2" />
+      <button id="btn-title" type="submit" class="rounded-lg bg-indigo-500 px-4 py-2">By title</button>
+      <button id="btn-tmdb" type="button" class="rounded-lg bg-slate-700 px-4 py-2">By TMDB ID</button>
+    </form>
+
+    <p id="lookup-status" class="text-sm text-slate-400 mb-4"></p>
+    <ul id="reaction-list" class="space-y-3"></ul>
+  </main>
+  <script>
+    const list = document.getElementById("reaction-list");
+    const status = document.getElementById("lookup-status");
+    const input = document.getElementById("lookup-input");
+
+    async function lookup(url) {
+      list.innerHTML = "";
+      status.textContent = "Loading...";
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          status.textContent = res.status === 404
+            ? "No reactions or movie found for this search."
+            : "Error loading reactions (HTTP " + res.status + ")";
+          return;
+        }
+        const data = await res.json();
+        status.textContent = `MovieId: ${data.movieId}`;
+        list.innerHTML = (data.reactionVideos || []).map((v) => {
+          const patreon = v.externalLinks?.patreonUrl || "";
+          return `<li class="rounded-xl border border-slate-700 bg-slate-900 p-4">
+            <p class="font-medium">${v.reactor?.name || "Unknown reactor"}</p>
+            <a class="text-indigo-400 text-sm break-all" href="${v.youTubeUrl}" target="_blank" rel="noopener">${v.youTubeUrl}</a>
+            ${patreon ? `<a class="block text-pink-400 text-sm break-all" href="${patreon}" target="_blank" rel="noopener">${patreon}</a>` : `<p class="text-slate-500 text-sm">No Patreon link</p>`}
+          </li>`;
+        }).join("") || `<li class="text-slate-400">No reaction videos.</li>`;
+      } catch {
+        status.textContent = "Failed to connect to API.";
+      } finally {
+        if (status.textContent === "Loading...")
+          status.textContent = "Request finished.";
+      }
+    }
+
+    document.getElementById("lookup-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      lookup(`/api/Extension/reactions?title=${encodeURIComponent(input.value)}`);
+    });
+    document.getElementById("btn-tmdb").addEventListener("click", () => {
+      lookup(`/api/Extension/reactions/tmdb/${encodeURIComponent(input.value)}`);
+    });
+  </script>
+</body>
+</html>

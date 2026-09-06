@@ -1,0 +1,17 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=reaction_db;Username=postgres;Password=YOUR_POSTGRES_PASSWORD"
+  },
+  "TmdbOptions": {
+    "ApiKey": "YOUR_TMDB_API_KEY"
+  },
+  "AdminSettings": {
+    "ApiKey": "change_me_admin_key"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+# Project: Reaction Video Aggregator API
+## Tech Stack
+- C# ASP.NET Core 8 Web API
+- Entity Framework Core (EF Core)
+- PostgreSQL (Npgsql provider)
+- BackgroundService for workers
+
+## Architecture Rules
+- Use the Repository Pattern or CQRS (MediatR) for data access. Do not put DbContext directly in controllers.
+- Use `System.Text.Json` for serialization. 
+- Strict Rule: Use PostgreSQL `JSONB` columns for unstructured metadata (Patreon Tiers, Social Links). Map them using EF Core's `HasColumnType("jsonb")`.
+- Implement the Strategy Pattern for all external scraping/ingestion logic.
+- Never write connection strings or API keys in code. Use `appsettings.Development.json` or User Secrets.

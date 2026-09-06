@@ -1,0 +1,25 @@
+# Render Blueprint — free web service + Postgres.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: reaction-video-aggregator
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: reaction-db
+          property: connectionString
+      - key: TmdbOptions__ApiKey
+        sync: false
+      - key: AdminSettings__ApiKey
+        generateValue: true
+
+databases:
+  - name: reaction-db
+    plan: free
+    databaseName: reaction_db
+    user: reaction
